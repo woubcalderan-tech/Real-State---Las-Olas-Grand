@@ -1,0 +1,25 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Temporary files and backup archives
+*.tmp
+*.bak
+*.log
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
