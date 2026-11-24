@@ -39,12 +39,29 @@
   };
   let started = false;
   let allowed = false;
+  let preference = null;
 
   function getPreference() {
     try {
-      return localStorage.getItem(preferenceKey) === 'granted';
+      return localStorage.getItem(preferenceKey);
     } catch {
-      return allowed;
+      return preference;
+    }
+  }
+
+  function expireAnalyticsCookies() {
+    const names = ['_ga', '_ga_' + measurementId.slice(2)];
+    const domains = [''];
+    if (location.hostname === 'lasolasgrand2010.com' || location.hostname === 'www.lasolasgrand2010.com') {
+      domains.push('; Domain=lasolasgrand2010.com');
+      if (location.hostname === 'www.lasolasgrand2010.com') domains.push('; Domain=www.lasolasgrand2010.com');
+    }
+
+    const secure = location.protocol === 'https:' ? '; Secure' : '';
+    for (const name of names) {
+      for (const domain of domains) {
+        document.cookie = name + '=; Max-Age=0; Path=/' + domain + secure;
+      }
     }
   }
 
@@ -70,25 +87,28 @@
     document.head.append(tag);
   }
 
-  function applyPreference(granted) {
-    const changed = granted !== allowed;
-    allowed = granted;
+  function applyPreference(choice) {
+    const wasAllowed = allowed;
+    preference = choice;
+    allowed = choice === 'granted';
     window[disableKey] = !allowed;
     status.textContent = allowed ? text.enabled : text.disabled;
     if (allowed && !started) {
       startAnalytics();
-    } else if (started && changed) {
+    } else if (started && allowed !== wasAllowed) {
       window.gtag('consent', 'update', { analytics_storage: allowed ? 'granted' : 'denied' });
     }
+    if (!allowed && (choice === 'denied' || wasAllowed)) expireAnalyticsCookies();
   }
 
   function savePreference(granted) {
+    const choice = granted ? 'granted' : 'denied';
+    applyPreference(choice);
     try {
-      localStorage.setItem(preferenceKey, granted ? 'granted' : 'denied');
+      localStorage.setItem(preferenceKey, choice);
     } catch {
       // When storage is unavailable, the choice still applies to this page.
     }
-    applyPreference(granted);
   }
 
   allow.addEventListener('click', () => savePreference(true));
